@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>攝影機預覽與拍照</title>
+  <title>名片掃描與辨識</title>
   <style>
     #preview, #photo {
       width: 320px;
@@ -24,12 +24,14 @@
   <button id="takePhoto" disabled>拍照</button>
   <video id="preview" autoplay playsinline></video>
   <img id="photo" alt="拍照結果" style="display:none;"/>
+  <div id="response" style="margin-top:10px;"></div>
   <script>
     const openCameraBtn = document.getElementById('openCamera');
     const takePhotoBtn = document.getElementById('takePhoto');
     const video = document.getElementById('preview');
     const photo = document.getElementById('photo');
     const webhookInput = document.getElementById('webhook');
+    const responseDiv = document.getElementById('response');
     let stream = null;
 
     openCameraBtn.onclick = async () => {
@@ -70,7 +72,8 @@
             method: 'POST',
             body: formData
           });
-          // 可根據需要處理 resp
+          const text = await resp.text();
+          responseDiv.innerHTML = text;
         } catch (e) {
           alert('上傳失敗: ' + e.message);
         }
