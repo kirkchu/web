@@ -2,14 +2,62 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>名片掃描與辨識</title>
   <style>
+    body {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 10px;
+      font-family: system-ui, Arial, sans-serif;
+      background: #fafafa;
+    }
+    label, #response {
+      word-break: break-all;
+    }
+    #webhook {
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 1em;
+      margin-top: 4px;
+      margin-bottom: 12px;
+    }
+    button {
+      width: 48%;
+      min-width: 120px;
+      font-size: 1.1em;
+      padding: 10px 0;
+      margin-bottom: 10px;
+      margin-right: 2%;
+      border-radius: 6px;
+      border: 1px solid #bbb;
+      background: #fff;
+      cursor: pointer;
+    }
+    button:last-of-type {
+      margin-right: 0;
+    }
     #preview, #photo {
-      width: 320px;
-      height: 240px;
+      width: 100%;
+      height: auto;
+      max-width: 100vw;
+      max-height: 60vw;
       border: 1px solid #ccc;
       display: block;
       margin-bottom: 10px;
+      background: #eee;
+      border-radius: 8px;
+      object-fit: contain;
+    }
+    @media (max-width: 600px) {
+      body {
+        padding: 4px;
+      }
+      button {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 8px;
+      }
     }
   </style>
 </head>
@@ -17,6 +65,7 @@
   <label>
     Webhook：
     <input type="text" id="webhook" style="width: 400px;">
+    <button type="button" id="clearWebhook" style="width:auto;padding:4px 10px;margin-left:6px;">刪除</button>
   </label>
   <br>
   <br>
@@ -31,13 +80,36 @@
     const video = document.getElementById('preview');
     const photo = document.getElementById('photo');
     const webhookInput = document.getElementById('webhook');
+    const clearWebhookBtn = document.getElementById('clearWebhook');
     const responseDiv = document.getElementById('response');
     let stream = null;
+
+    // 載入時自動讀取 localStorage
+    window.addEventListener('DOMContentLoaded', () => {
+      const saved = localStorage.getItem('webhook');
+      if (saved) webhookInput.value = saved;
+    });
+
+    // 輸入時即時寫入 localStorage
+    webhookInput.addEventListener('input', () => {
+      localStorage.setItem('webhook', webhookInput.value);
+    });
+
+    // 刪除按鈕清空輸入框與 localStorage
+    clearWebhookBtn.onclick = () => {
+      webhookInput.value = '';
+      localStorage.removeItem('webhook');
+    };
 
     openCameraBtn.onclick = async () => {
       if (stream) return;
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        // 判斷是否為行動裝置
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        const constraints = isMobile
+          ? { video: { facingMode: { exact: "environment" } } }
+          : { video: true };
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = stream;
         takePhotoBtn.disabled = false;
         photo.style.display = 'none';
