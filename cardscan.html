@@ -48,6 +48,7 @@
       background: #eee;
       border-radius: 8px;
       object-fit: contain;
+      aspect-ratio: 4/3;
     }
     @media (max-width: 600px) {
       body {
@@ -121,11 +122,28 @@
 
     takePhotoBtn.onclick = () => {
       if (!stream) return;
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      // 取得 video 寬高
+      let vw = video.videoWidth;
+      let vh = video.videoHeight;
+      let landscape = vw >= vh;
+      // 若為直向，canvas 轉為橫向
+      let canvas = document.createElement('canvas');
+      if (landscape) {
+        canvas.width = vw;
+        canvas.height = vh;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, vw, vh);
+      } else {
+        // 直向轉橫向
+        canvas.width = vh;
+        canvas.height = vw;
+        const ctx = canvas.getContext('2d');
+        ctx.save();
+        ctx.translate(vh, 0);
+        ctx.rotate(Math.PI / 2);
+        ctx.drawImage(video, 0, 0, vw, vh);
+        ctx.restore();
+      }
       canvas.toBlob(async (blob) => {
         photo.src = URL.createObjectURL(blob);
         photo.style.display = 'block';
