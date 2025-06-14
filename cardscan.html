@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>攝影機預覽與拍照</title>
+  <style>
+    #preview, #photo {
+      width: 320px;
+      height: 240px;
+      border: 1px solid #ccc;
+      display: block;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <label>
+    Webhook：
+    <input type="text" id="webhook" style="width: 400px;">
+  </label>
+  <br>
+  <br>
+  <button id="openCamera">開啟攝影機</button>
+  <button id="takePhoto" disabled>拍照</button>
+  <video id="preview" autoplay playsinline></video>
+  <img id="photo" alt="拍照結果" style="display:none;"/>
+  <script>
+    const openCameraBtn = document.getElementById('openCamera');
+    const takePhotoBtn = document.getElementById('takePhoto');
+    const video = document.getElementById('preview');
+    const photo = document.getElementById('photo');
+    const webhookInput = document.getElementById('webhook');
+    let stream = null;
+
+    openCameraBtn.onclick = async () => {
+      if (stream) return;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        takePhotoBtn.disabled = false;
+        photo.style.display = 'none';
+        video.style.display = 'block';
+      } catch (err) {
+        alert('無法開啟攝影機: ' + err.message);
+      }
+    };
+
+    takePhotoBtn.onclick = () => {
+      if (!stream) return;
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(async (blob) => {
+        photo.src = URL.createObjectURL(blob);
+        photo.style.display = 'block';
+        video.style.display = 'none';
+        // 關閉攝影機串流
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+        takePhotoBtn.disabled = true;
+
+        // 以 file upload 方式上傳
+        const formData = new FormData();
+        formData.append('file', blob, 'photo.png');
+        const url = webhookInput.value;
+        try {
+          const resp = await fetch(url, {
+            method: 'POST',
+            body: formData
+          });
+          // 可根據需要處理 resp
+        } catch (e) {
+          alert('上傳失敗: ' + e.message);
+        }
+      }, 'image/png');
+    };
+  </script>
+</body>
+</html>
