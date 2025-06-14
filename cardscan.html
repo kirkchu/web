@@ -116,26 +116,6 @@
         takePhotoBtn.disabled = false;
         photo.style.display = 'none';
         video.style.display = 'block';
-
-        // 預覽畫面橫向顯示
-        // 若攝影機為直向，將 video 元素旋轉 90 度
-        video.onloadedmetadata = () => {
-          let vw = video.videoWidth;
-          let vh = video.videoHeight;
-          if (vw < vh) {
-            video.style.transform = 'rotate(90deg)';
-            video.style.width = 'auto';
-            video.style.height = '100%';
-            video.style.maxWidth = '60vw';
-            video.style.maxHeight = '100vw';
-          } else {
-            video.style.transform = '';
-            video.style.width = '100%';
-            video.style.height = 'auto';
-            video.style.maxWidth = '100vw';
-            video.style.maxHeight = '60vw';
-          }
-        };
       } catch (err) {
         alert('無法開啟攝影機: ' + err.message);
       }
@@ -146,25 +126,12 @@
       // 取得 video 寬高
       let vw = video.videoWidth;
       let vh = video.videoHeight;
-      let landscape = vw >= vh;
-      // 若為直向，canvas 轉為橫向
+      // 不再判斷橫向，canvas 直接用原始寬高
       let canvas = document.createElement('canvas');
-      if (landscape) {
-        canvas.width = vw;
-        canvas.height = vh;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(video, 0, 0, vw, vh);
-      } else {
-        // 直向轉橫向
-        canvas.width = vh;
-        canvas.height = vw;
-        const ctx = canvas.getContext('2d');
-        ctx.save();
-        ctx.translate(vh, 0);
-        ctx.rotate(Math.PI / 2);
-        ctx.drawImage(video, 0, 0, vw, vh);
-        ctx.restore();
-      }
+      canvas.width = vw;
+      canvas.height = vh;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, vw, vh);
       canvas.toBlob(async (blob) => {
         photo.src = URL.createObjectURL(blob);
         photo.style.display = 'block';
